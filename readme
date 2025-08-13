@@ -1,0 +1,8 @@
+C:/Users/user/AppData/Local/Programs/Python/Python313/python.exe -m pip install selenium
+C:/Users/user/AppData/Local/Programs/Python/Python313/python.exe -m pip install webdriver-manager
+
+pip install pipreqs
+pipreqs . --encoding=utf-8 --force
+pip install -r requirements.txt
+
+
