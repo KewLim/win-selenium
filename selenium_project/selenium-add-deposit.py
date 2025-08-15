@@ -501,7 +501,7 @@ def add_transaction_details(record):
     if "open" in calendar_popup.get_attribute("class"):
         print("[INFO] Calendar popup is OPEN")
 
-        target_date = record["Datetime"].strftime("%B %-d, %Y")  # e.g. "July 6, 2025"
+        target_date = record["Datetime"].strftime("%B %#d, %Y")  # e.g. "July 6, 2025"
         all_days = driver.find_elements(By.CSS_SELECTOR, ".flatpickr-day")
 
         for day in all_days:
