@@ -71,6 +71,7 @@ def smart_click(element, verify_callback=None):
         # Only retry if it's an overlay blocking issue
         if "obscures it" in error_msg or "not clickable" in error_msg:
             print("[INFO] Overlay blocking click, trying JS click...")
+            element.send_keys(Keys.ENTER)
             if wait_for_overlay_to_disappear(driver, max_wait=3):
                 driver.execute_script("arguments[0].click();", element)
                 if verify_callback:

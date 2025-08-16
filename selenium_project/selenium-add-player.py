@@ -18,8 +18,70 @@ from selenium.webdriver import ActionChains
 from selenium.common.exceptions import TimeoutException
 
 
+def wait_for_overlay_to_disappear(driver, max_wait=5):
+    """Fast overlay detection - only wait if overlay actually exists"""
+    overlay_selectors = [
+        "div.absolute.inset-0.transition-opacity.duration-300.bg-slate-900\\/60",
+        ".app-preloader",
+        "div.app-preloader"
+    ]
+    
+    overlay_found = False
+    for selector in overlay_selectors:
+        try:
+            # Quick check if overlay exists
+            overlays = driver.find_elements(By.CSS_SELECTOR, selector)
+            if overlays and overlays[0].is_displayed():
+                print(f"[INFO] {selector} overlay detected, waiting...")
+                WebDriverWait(driver, max_wait).until(
+                    EC.invisibility_of_element_located((By.CSS_SELECTOR, selector))
+                )
+                overlay_found = True
+                print(f"[INFO] {selector} overlay disappeared")
+        except:
+            continue
+    
+    if overlay_found:
+        time.sleep(0.3)  # Brief wait for DOM stability
+        return True
+    return False
 
 
+def smart_click(element, verify_callback=None):
+    """
+    Smart click with minimal retries - only retry if overlay blocks
+    """
+    try:
+        # Try normal click first
+        element.click()
+        
+        # Quick verification if callback provided
+        if verify_callback:
+            time.sleep(0.3)
+            if verify_callback():
+                return True
+            else:
+                # Only retry if overlay is blocking
+                if wait_for_overlay_to_disappear(driver, max_wait=3):
+                    element.click()
+                    time.sleep(0.3)
+                    return verify_callback()
+                return False
+        return True
+        
+    except Exception as click_error:
+        error_msg = str(click_error)
+        # Only retry if it's an overlay blocking issue
+        if "obscures it" in error_msg or "not clickable" in error_msg:
+            print("[INFO] Overlay blocking click, trying JS click...")
+            element.send_keys(Keys.ENTER)
+            if wait_for_overlay_to_disappear(driver, max_wait=3):
+                driver.execute_script("arguments[0].click();", element)
+                if verify_callback:
+                    time.sleep(0.3)
+                    return verify_callback()
+                return True
+        raise click_error
 
 
 options = Options()
@@ -128,7 +190,7 @@ def add_player_details(record):
     add_button = wait.until(EC.element_to_be_clickable((
         By.XPATH, "//button[contains(text(), 'Add New Player')]"
     )))
-    add_button.click()
+    smart_click(add_button)
     print("[INFO] Add Player button clicked")
 
     time.sleep(1)
